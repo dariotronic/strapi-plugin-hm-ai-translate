@@ -1,0 +1,87 @@
+{
+  "name": "strapi-plugin-hm-ai-translate",
+  "version": "1.0.0",
+  "description": "Traduci automaticamente i tuoi contenuti tramite AI in Strapi v5.",
+  "keywords": [
+    "strapi",
+    "plugin",
+    "translation",
+    "ai",
+    "llm",
+    "openai",
+    "gemini"
+  ],
+  "type": "commonjs",
+  "exports": {
+    "./package.json": "./package.json",
+    "./strapi-admin": {
+      "types": "./dist/admin/src/index.d.ts",
+      "source": "./admin/src/index.ts",
+      "import": "./dist/admin/index.mjs",
+      "require": "./dist/admin/index.js",
+      "default": "./dist/admin/index.js"
+    },
+    "./strapi-server": {
+      "types": "./dist/server/src/index.d.ts",
+      "source": "./server/src/index.ts",
+      "import": "./dist/server/index.mjs",
+      "require": "./dist/server/index.js",
+      "default": "./dist/server/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "strapi-admin.js",
+    "strapi-server.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "strapi-plugin build",
+    "watch": "strapi-plugin watch",
+    "watch:link": "strapi-plugin watch:link",
+    "verify": "strapi-plugin verify",
+    "test:ts:front": "run -T tsc -p admin/tsconfig.json",
+    "test:ts:back": "run -T tsc -p server/tsconfig.json"
+  },
+  "dependencies": {
+    "@strapi/design-system": "^2.0.0-rc.21",
+    "@strapi/icons": "^2.0.0-rc.21",
+    "openai": "^4.0.0"
+  },
+  "devDependencies": {
+    "@strapi/sdk-plugin": "^5.3.2",
+    "@strapi/strapi": "^5.15.1",
+    "@strapi/typescript-utils": "^5.15.1",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "prettier": "^3.5.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.6.2",
+    "styled-components": "^6.1.18",
+    "typescript": "^5.8.3"
+  },
+  "peerDependencies": {
+    "@strapi/strapi": "^5.0.0",
+    "react": "^18.3.1 || ^19.0.0",
+    "react-dom": "^18.3.1 || ^19.0.0",
+    "react-router-dom": "^6.30.0 || ^7.0.0",
+    "styled-components": "^6.1.17"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "strapi": {
+    "kind": "plugin",
+    "name": "hm-ai-strapi-translate",
+    "displayName": "HM traduttore AI",
+    "description": "Traduci automaticamente i tuoi contenuti tramite AI in Strapi v5."
+  },
+  "license": "MIT",
+  "author": "Dario Erste <darioerste@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/darioerste/strapi-plugin-hm-ai-translate.git"
+  }
+}
