@@ -3,7 +3,7 @@
 Una potente soluzione di traduzione per Strapi v5 che sfrutta l'Intelligenza Artificiale (OpenAI e Gemini) per tradurre in automatico i contenuti.
 Il plugin aggiunge pulsanti comodi direttamente nella Content Manager Edit View per tradurre contenuti dalla lingua di default alle altre lingue in modo guidato e sicuro rispettando gli schemi, senza sovrascrivere file media o variare campi relazionali.
 
-**Versione corrente:** `1.0.0`
+**Versione corrente:** `0.1.0`
 
 ## Requisiti e Compatibilità
 - **Strapi**: `>=5.0.0` (testato su range 5.x)
@@ -15,10 +15,17 @@ Il plugin aggiunge pulsanti comodi direttamente nella Content Manager Edit View 
 
 **Nome del plugin (npm / Strapi):** `strapi-plugin-hm-ai-translate` — ID interno Strapi: `hm-ai-strapi-translate`.
 
-Al momento l'installazione è possibile tramite **link locale** (dipendenza `file:`) o copia della cartella del plugin nel progetto. La pubblicazione su npm è prevista come futura implementazione (vedi sezione _Future implementazioni_).
+### Da npm (consigliato)
 
 ```bash
-# Esempio con link da cartella (il pacchetto non è ancora su npm)
+npm install strapi-plugin-hm-ai-translate
+```
+
+### Sviluppo locale (link da cartella)
+
+Per contribuire o testare in locale puoi usare una dipendenza `file:`:
+
+```bash
 # Nel package.json del progetto: "strapi-plugin-hm-ai-translate": "file:./strapi-plugin-hm-ai-translate"
 npm install
 ```
@@ -98,7 +105,6 @@ Il plugin protegge le API di traduzione ed integra il sistema nativo dei permess
 
 Le seguenti funzionalità sono previste ma **non ancora presenti** nella versione attuale:
 
-- **Pubblicazione su npm**: distribuzione del plugin sul registry npm per l'installazione con `npm install strapi-plugin-hm-ai-translate`.
 - **Pagina del plugin in Strapi**: pagina dedicata nella sidebar dell'admin (es. voce "HM traduttore AI") per configurare opzioni avanzate (system prompt, temperatura LLM) senza usare solo le variabili d'ambiente.
 - **Traduci tutte le localizzazioni**: pulsante unico per avviare la traduzione verso **tutte** le lingue target in un'unica azione, con feedback di avanzamento e notifiche al termine.
 
