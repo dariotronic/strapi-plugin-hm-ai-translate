@@ -15,12 +15,14 @@
   "exports": {
     "./package.json": "./package.json",
     "./strapi-admin": {
+      "types": "./dist/admin/src/index.d.ts",
       "source": "./admin/src/index.ts",
       "import": "./dist/admin/index.mjs",
       "require": "./dist/admin/index.js",
       "default": "./dist/admin/index.js"
     },
     "./strapi-server": {
+      "types": "./dist/server/src/index.d.ts",
       "source": "./server/src/index.ts",
       "import": "./dist/server/index.mjs",
       "require": "./dist/server/index.js",
@@ -35,11 +37,10 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "npx strapi-plugin build",
-    "prepublishOnly": "npm run build",
-    "watch": "npx strapi-plugin watch",
-    "watch:link": "npx strapi-plugin watch:link",
-    "verify": "npx strapi-plugin verify",
+    "build": "strapi-plugin build",
+    "watch": "strapi-plugin watch",
+    "watch:link": "strapi-plugin watch:link",
+    "verify": "strapi-plugin verify",
     "test:ts:front": "run -T tsc -p admin/tsconfig.json",
     "test:ts:back": "run -T tsc -p server/tsconfig.json"
   },
@@ -68,10 +69,6 @@
     "react-router-dom": "^6.30.0",
     "styled-components": "^6.1.17"
   },
-  "overrides": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  },
   "engines": {
     "node": ">=22.0.0"
   },
@@ -85,6 +82,6 @@
   "author": "Dario Erste <darioerste@gmail.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dariotronic/strapi-plugin-hm-ai-translate.git"
+    "url": "https://github.com/darioerste/strapi-plugin-hm-ai-translate.git"
   }
 }
