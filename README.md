@@ -3,7 +3,7 @@
 Una potente soluzione di traduzione per Strapi v5 che sfrutta l'Intelligenza Artificiale (OpenAI e Gemini) per tradurre in automatico i contenuti.
 Il plugin aggiunge pulsanti comodi direttamente nella Content Manager Edit View per tradurre contenuti dalla lingua di default alle altre lingue in modo guidato e sicuro rispettando gli schemi, senza sovrascrivere file media o variare campi relazionali.
 
-**Versione corrente:** `0.1.0`
+**Versione corrente:** `0.2.1`
 
 ## Requisiti e Compatibilità
 - **Strapi**: `>=5.0.0` (testato su range 5.x)

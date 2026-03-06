@@ -137,7 +137,7 @@ export function TranslatePanel(props: TranslatePanelProps) {
                     message: customLabel('Translated to {locale} successfully!', { locale: targetLocale }),
                 });
                 // Reload the current route so the locale switcher reflects the new translation
-                navigate(0);
+                setTimeout(() => navigate(0), 3000);
             }
         } catch (err: any) {
             const correlationId = err.response?.data?.correlationId || 'Unknown';
