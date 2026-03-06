@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Button, Flex, IconButton, Modal, Typography } from '@strapi/design-system';
-import { useNotification, useFetchClient } from '@strapi/strapi/admin';
+import { useNotification, useFetchClient, useRBAC } from '@strapi/strapi/admin';
 import { useNavigate } from 'react-router-dom';
 import { translateApi } from '../api/translate';
 import { Earth, Information } from '@strapi/icons';
@@ -100,6 +100,10 @@ export function TranslatePanel(props: TranslatePanelProps) {
     const [isLoading, setIsLoading] = React.useState(false);
     const [translatingLocale, setTranslatingLocale] = React.useState<string | null>(null);
 
+    const { allowedActions, isLoading: isLoadingPermissions } = useRBAC({
+        translate: [{ action: 'plugin::hm-ai-strapi-translate.translate', subject: null }],
+    });
+
     React.useEffect(() => {
         const fetchLocales = async () => {
             try {
@@ -115,6 +119,11 @@ export function TranslatePanel(props: TranslatePanelProps) {
     const defaultLocale = locales.find((l) => l.isDefault)?.code;
     const currentDocLocale = document?.locale || defaultLocale;
     const targetLocales = locales.filter((l) => l.code !== defaultLocale);
+
+    // Don't show panel if user has no translate permission
+    if (isLoadingPermissions || !allowedActions.canTranslate) {
+        return null;
+    }
 
     // Don't show panel if: no locales loaded, not on default locale, or no targets
     if (!locales.length || !defaultLocale || currentDocLocale !== defaultLocale || !targetLocales.length) {
@@ -134,7 +143,7 @@ export function TranslatePanel(props: TranslatePanelProps) {
             if (result?.ok) {
                 toggleNotification({
                     type: 'success',
-                    message: customLabel('Translated to {locale} successfully!', { locale: targetLocale }),
+                    message: customLabel('Translated to {locale} successfully!', { locale: getLocaleName(targetLocale) }),
                 });
                 // Reload the current route so the locale switcher reflects the new translation
                 setTimeout(() => navigate(0), 3000);
