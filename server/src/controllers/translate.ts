@@ -7,14 +7,21 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         try {
             const { uid, documentId, sourceLocale, targetLocale } = ctx.request.body;
 
-            if (!uid || !documentId || !sourceLocale || !targetLocale) {
-                return ctx.badRequest('Missing required fields: uid, documentId, sourceLocale, targetLocale');
+            if (!uid || !sourceLocale || !targetLocale) {
+                return ctx.badRequest('Missing required fields: uid, sourceLocale, targetLocale');
+            }
+
+            const model = (strapi as any).getModel(uid);
+            const isSingleType = model?.kind === 'singleType';
+
+            if (!isSingleType && !documentId) {
+                return ctx.badRequest('Missing required field: documentId (required for collection types)');
             }
 
             const result = await strapi
                 .plugin('hm-ai-strapi-translate')
                 .service('translate')
-                .translateDocument(uid, documentId, sourceLocale, targetLocale, correlationId);
+                .translateDocument(uid, documentId || null, sourceLocale, targetLocale, correlationId);
 
             ctx.body = { ...result, correlationId };
         } catch (err: any) {

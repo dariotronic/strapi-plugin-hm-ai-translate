@@ -308,9 +308,12 @@ async function mergeUnsupportedFields(
 }
 
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
-    async translateDocument(uid: string, documentId: string, sourceLocale: string, targetLocale: string, correlationId: string) {
+    async translateDocument(uid: string, documentId: string | null, sourceLocale: string, targetLocale: string, correlationId: string) {
         const startTime = Date.now();
         const config = strapi.plugin('hm-ai-strapi-translate').config;
+
+        const model = (strapi as any).getModel(uid);
+        const isSingleType = model?.kind === 'singleType';
 
         // 1. Fetch Source Document con deep populate
         //
@@ -325,25 +328,22 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         const populateBuilderService = (strapi as any).plugin('content-manager').service('populate-builder');
         const deepPopulate = await populateBuilderService(uid).populateDeep(Infinity).build();
 
-        const sourceDoc = await strapi.documents(uid as any).findOne({
-            documentId,
-            locale: sourceLocale,
-            populate: deepPopulate,
-        });
+        const sourceDoc = isSingleType
+            ? await (strapi.documents(uid as any) as any).findFirst({ locale: sourceLocale, populate: deepPopulate })
+            : await strapi.documents(uid as any).findOne({ documentId: documentId!, locale: sourceLocale, populate: deepPopulate });
 
         if (!sourceDoc) {
-            throw new Error(`Source document not found: ${documentId} (${sourceLocale})`);
+            throw new Error(`Source document not found: ${documentId ?? uid} (${sourceLocale})`);
         }
 
         // 2. Check if Target Locale Exists
-        // findOne restituisce null (senza lanciare) se la locale non esiste.
+        // findOne/findFirst restituisce null (senza lanciare) se la locale non esiste.
         let targetDocExists = false;
         let existingTargetDoc: any = null;
         try {
-            existingTargetDoc = await strapi.documents(uid as any).findOne({
-                documentId,
-                locale: targetLocale,
-            });
+            existingTargetDoc = isSingleType
+                ? await (strapi.documents(uid as any) as any).findFirst({ locale: targetLocale })
+                : await strapi.documents(uid as any).findOne({ documentId: documentId!, locale: targetLocale });
             if (existingTargetDoc) {
                 targetDocExists = true;
             }
@@ -355,7 +355,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         const traverser = new SchemaTraverser(strapi);
         const segments = traverser.extract(uid, sourceDoc);
 
-        const meta = { correlationId, uid, documentId, sourceLocale, targetLocale, segmentsCount: segments.length };
+        const meta = { correlationId, uid, documentId: documentId ?? uid, sourceLocale, targetLocale, segmentsCount: segments.length };
 
         if (config("debug")) {
             logWithPrefix(strapi, meta, 'info', `Extracted ${segments.length} segments.`);
@@ -440,8 +440,12 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
             // update() in Strapi v5 è un UPSERT per le localizzazioni:
             // se la locale non esiste ma il documento esiste → la CREA copiando i campi
             // non-localizzati tramite copyNonLocalizedFields() + salva i dati forniti.
+            // Per i single type il documentId non arriva dal frontend, ma il documento
+            // esiste già (è il sorgente): lo prendiamo da sourceDoc.
+            const effectiveDocumentId = isSingleType ? sourceDoc.documentId : documentId!;
+
             await strapi.documents(uid as any).update({
-                documentId,
+                documentId: effectiveDocumentId,
                 locale: targetLocale,
                 data: mergedData,
             });
@@ -467,8 +471,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
             // Se il documento target ha già un valore per un campo UID (es. slug), lo si mantiene.
             preserveExistingUidValues(mergedData, existingTargetDoc, schema, getModel as any);
 
+            const effectiveDocumentId = isSingleType ? sourceDoc.documentId : documentId!;
+
             await strapi.documents(uid as any).update({
-                documentId,
+                documentId: effectiveDocumentId,
                 locale: targetLocale,
                 data: mergedData,
             });
