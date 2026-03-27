@@ -19,13 +19,14 @@ export class SchemaTraverser {
 
     /**
      * Generates a flat array of segments containing translatable text from the input data based on the schema.
+     * @param isBlacklisted - Optional callback that returns true if the field at the given path should be excluded.
      */
-    public extract(uid: string, data: any): Segment[] {
+    public extract(uid: string, data: any, isBlacklisted?: (path: (string | number)[]) => boolean): Segment[] {
         const segments: Segment[] = [];
         const schema = this.getSchema(uid);
         if (!schema) return segments;
 
-        this.traverseForExtract(schema, data, [], segments, uid);
+        this.traverseForExtract(schema, data, [], segments, uid, isBlacklisted);
         return segments;
     }
 
@@ -51,7 +52,7 @@ export class SchemaTraverser {
         return null;
     }
 
-    private traverseForExtract(schema: any, data: any, currentPath: (string | number)[], segments: Segment[], uid: string) {
+    private traverseForExtract(schema: any, data: any, currentPath: (string | number)[], segments: Segment[], uid: string, isBlacklisted?: (path: (string | number)[]) => boolean) {
         if (!data || typeof data !== 'object') return;
 
         const attributes = schema.attributes;
@@ -67,6 +68,7 @@ export class SchemaTraverser {
 
             // Base cases for translatable types
             if (['string', 'text', 'richtext'].includes(attribute.type)) {
+                if (isBlacklisted?.(newPath)) continue;
                 if (typeof value === 'string' && value.trim() !== '') {
                     segments.push({
                         path: newPath,
@@ -80,6 +82,7 @@ export class SchemaTraverser {
                     });
                 }
             } else if (attribute.type === 'blocks') {
+                if (isBlacklisted?.(newPath)) continue;
                 // Handle blocks array (Strapi 5 format)
                 if (Array.isArray(value)) {
                     this.extractBlocks(value, newPath, segments, uid);
@@ -90,10 +93,10 @@ export class SchemaTraverser {
                 if (compSchema) {
                     if (attribute.repeatable && Array.isArray(value)) {
                         value.forEach((item, index) => {
-                            this.traverseForExtract(compSchema, item, [...newPath, index], segments, componentUid);
+                            this.traverseForExtract(compSchema, item, [...newPath, index], segments, componentUid, isBlacklisted);
                         });
                     } else {
-                        this.traverseForExtract(compSchema, value, newPath, segments, componentUid);
+                        this.traverseForExtract(compSchema, value, newPath, segments, componentUid, isBlacklisted);
                     }
                 }
             } else if (attribute.type === 'dynamiczone') {
@@ -102,7 +105,7 @@ export class SchemaTraverser {
                         if (item && item.__component) {
                             const compSchema = this.getSchema(item.__component);
                             if (compSchema) {
-                                this.traverseForExtract(compSchema, item, [...newPath, index], segments, item.__component);
+                                this.traverseForExtract(compSchema, item, [...newPath, index], segments, item.__component, isBlacklisted);
                             }
                         }
                     });

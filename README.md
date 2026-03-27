@@ -3,7 +3,7 @@
 Una potente soluzione di traduzione per Strapi v5 che sfrutta l'Intelligenza Artificiale (OpenAI e Gemini) per tradurre in automatico i contenuti.
 Il plugin aggiunge pulsanti comodi direttamente nella Content Manager Edit View per tradurre contenuti dalla lingua di default alle altre lingue in modo guidato e sicuro rispettando gli schemi, senza sovrascrivere file media o variare campi relazionali.
 
-**Versione corrente:** `0.3.0`
+**Versione corrente:** `0.4.0`
 
 ## Requisiti e Compatibilità
 - **Strapi**: `>=5.0.0` (testato su range 5.x)
@@ -75,6 +75,57 @@ Puoi configurare il comportamento del plugin definendo le seguenti variabili nel
 | `HM_AI_TRANSLATE_MAX_RETRIES` | Max tentativi in caso di 429 status (rate limit) | `3` | `5` |
 | `HM_AI_TRANSLATE_TIMEOUT_MS` | Timeout per richiesta al LLM (in millisecondi) | `30000` | `60000` |
 | `HM_AI_TRANSLATE_MAX_CHARS_PER_REQUEST` | Chunking logico: max caratteri per segment batch prima di splittare richieste multiple | `10000` | `10000` |
+
+## 🚫 Blacklist campi (esclusione dalla traduzione)
+
+A partire dalla versione `0.4.0` è possibile escludere specifici campi testuali dalla traduzione automatica. Questo è utile per nomi propri, brand, nomi di luoghi o qualsiasi testo che deve rimanere invariato in tutte le localizzazioni (es. "Bagno Pinna di squalo" non deve diventare "Bathroom Shark fin").
+
+La blacklist si configura nel file `config/plugins.ts` (o `.js`) del progetto Strapi, nella chiave `config.blacklist` del plugin. Ogni entry usa come chiave il **collectionName** univoco del content type (lo trovi nello schema del content type, campo `collectionName`).
+
+### Struttura
+
+```ts
+// config/plugins.ts
+export default () => ({
+  'hm-ai-strapi-translate': {
+    enabled: true,
+    config: {
+      blacklist: {
+        "strutture": {
+          "kind": "collectionType",
+          "fields": ["titolo"]
+        },
+        "destinazioni": {
+          "kind": "singleType",
+          "fields": ["nome", "seo.metaTitle"]
+        }
+      }
+    }
+  }
+});
+```
+
+| Proprietà | Tipo | Descrizione |
+|---|---|---|
+| *chiave* (es. `"strutture"`) | `string` | Il `collectionName` univoco del content type nel database |
+| `kind` | `"collectionType"` \| `"singleType"` | Tipo del content type (opzionale, solo a scopo documentativo) |
+| `fields` | `string[]` | Array di nomi campo da escludere dalla traduzione |
+
+### Campi annidati in componenti
+
+Per escludere un campo all'interno di un componente, usa la notazione con punto (dot-notation):
+
+```ts
+"fields": ["seo.metaTitle", "seo.metaDescription"]
+```
+
+Questo esclude i campi `metaTitle` e `metaDescription` all'interno del componente `seo`, indipendentemente dal fatto che sia un componente singolo o ripetibile.
+
+### Come funziona
+
+1. I campi in blacklist **non vengono inviati** al provider AI (OpenAI/Gemini) — nessun costo aggiuntivo e nessun rischio di traduzione indesiderata.
+2. Il valore originale del campo viene **copiato dal documento sorgente** nella localizzazione target, mantenendo esattamente il testo della lingua di default.
+3. Se la blacklist è vuota o non configurata, il comportamento del plugin resta identico alle versioni precedenti.
 
 ## 🛡️ Sicurezza e RBAC (Role-Based Access Control)
 

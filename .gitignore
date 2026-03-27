@@ -137,3 +137,4 @@ yarn-error.log
 ############################
 
 coverage
+.claude/settings.local.json

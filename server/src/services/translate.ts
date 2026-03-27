@@ -208,7 +208,8 @@ async function mergeUnsupportedFields(
     schema: any,
     getModel: any,
     strapiInstance?: any,
-    targetLocale?: string
+    targetLocale?: string,
+    blacklistedFields?: Set<string>
 ): Promise<any> {
     if (!sourceDoc) return targetData;
 
@@ -297,6 +298,16 @@ async function mergeUnsupportedFields(
 
             if (UNSUPPORTED_ATTRIBUTE_TYPES.includes(attribute.type)) return; // preserva (boolean, enumeration)
             if (attribute.type === 'component' || attribute.type === 'dynamiczone') return; // traverseEntity ricorsa al loro interno
+
+            // Se il campo è in blacklist, preserva il valore dal sorgente (non rimuovere)
+            if (blacklistedFields && blacklistedFields.size > 0 && path.raw) {
+                const normalized = path.raw
+                    .split('.')
+                    .filter((p: string) => !/^\d+$/.test(p))
+                    .join('.');
+                if (blacklistedFields.has(normalized)) return;
+            }
+
             remove(key); // rimuove i campi traducibili (string, text, richtext, ecc.)
         },
         { schema, getModel },
@@ -353,7 +364,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
         // 3. Extract Segments
         const traverser = new SchemaTraverser(strapi);
-        const segments = traverser.extract(uid, sourceDoc);
+        const blacklistService = strapi.plugin('hm-ai-strapi-translate').service('blacklist');
+        const isBlacklisted = (path: (string | number)[]) => blacklistService.isBlacklisted(uid, path);
+        const blacklistedFields = blacklistService.getBlacklistedFields(uid);
+        const segments = traverser.extract(uid, sourceDoc, isBlacklisted);
 
         const meta = { correlationId, uid, documentId: documentId ?? uid, sourceLocale, targetLocale, segmentsCount: segments.length };
 
@@ -435,7 +449,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
             // Fonde: testo tradotto (priorità alta) + campi non supportati dal sorgente (media, relazioni, ecc.)
             // Passa strapi e targetLocale per il pre-check delle relazioni localizzate via DB.
-            const mergedData = await mergeUnsupportedFields(cleanTranslatedText, sourceDoc, schema, getModel as any, strapi, targetLocale);
+            const mergedData = await mergeUnsupportedFields(cleanTranslatedText, sourceDoc, schema, getModel as any, strapi, targetLocale, blacklistedFields);
 
             // update() in Strapi v5 è un UPSERT per le localizzazioni:
             // se la locale non esiste ma il documento esiste → la CREA copiando i campi
@@ -466,7 +480,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
             const schema = (strapi as any).getModel(uid);
             const getModel = (strapi as any).getModel.bind(strapi);
 
-            const mergedData = await mergeUnsupportedFields(cleanTranslatedText, sourceDoc, schema, getModel as any, strapi, targetLocale);
+            const mergedData = await mergeUnsupportedFields(cleanTranslatedText, sourceDoc, schema, getModel as any, strapi, targetLocale, blacklistedFields);
 
             // Se il documento target ha già un valore per un campo UID (es. slug), lo si mantiene.
             preserveExistingUidValues(mergedData, existingTargetDoc, schema, getModel as any);
