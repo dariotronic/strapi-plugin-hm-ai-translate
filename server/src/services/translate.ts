@@ -213,6 +213,11 @@ async function mergeUnsupportedFields(
 ): Promise<any> {
     if (!sourceDoc) return targetData;
 
+    // Deep clone per evitare che traverseEntity muti l'oggetto sorgente originale.
+    // Senza clone, le callback remove(key) alterano sourceDoc in-place, e Strapi
+    // può propagare la mutazione alla localizzazione sorgente tramite identity map.
+    const sourceClone = JSON.parse(JSON.stringify(sourceDoc));
+
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { traverseEntity } = require('@strapi/utils');
 
@@ -311,7 +316,7 @@ async function mergeUnsupportedFields(
             remove(key); // rimuove i campi traducibili (string, text, richtext, ecc.)
         },
         { schema, getModel },
-        sourceDoc
+        sourceClone
     );
 
     // Deep merge: testo tradotto ha priorità sui campi non supportati del sorgente
