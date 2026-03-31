@@ -239,6 +239,14 @@ async function mergeUnsupportedFields(
             if (IGNORED_FIELDS.includes(key)) { remove(key); return; }
             if (!attribute) return; // es. __component nelle dynamic zone: preserva
 
+            // Campi non localizzati (pluginOptions.i18n.localized === false): condivisi tra tutte le
+            // localizzazioni. Non devono mai essere tradotti né riscritti: li preserviamo dal sorgente
+            // così Strapi li sincronizza invariati su tutte le locale via copyNonLocalizedFields.
+            if (attribute.pluginOptions?.i18n?.localized === false) {
+                preservedPaths.add(path.raw);
+                return;
+            }
+
             if (attribute.type === 'relation') {
                 const targetModel = attribute.target ? getModel(attribute.target) : null;
                 const isLocalizedTarget = targetModel?.pluginOptions?.i18n?.localized === true;
@@ -286,14 +294,22 @@ async function mergeUnsupportedFields(
             }
 
             // UID (es. slug): lo schema può definire targetField (es. "titolo") da cui generare lo slug.
-            // Se c'è targetField, generiamo lo slug dal valore tradotto di quel campo; altrimenti copia dal sorgente.
+            // Prima si cerca il valore tradotto di targetField; se assente (campo blacklistato o non
+            // tradotto), si usa il valore del documento sorgente come fallback per generare lo slug.
             if (attribute.type === 'uid') {
                 const targetField = (attribute as any).targetField;
-                if (targetField && targetData) {
-                    const parent = getParentObject(targetData, path.raw);
-                    const sourceText = parent && parent[targetField];
-                    if (typeof sourceText === 'string' && sourceText.trim()) {
-                        const slug = slugify(sourceText);
+                if (targetField) {
+                    const translatedParent = targetData ? getParentObject(targetData, path.raw) : null;
+                    let slugSource = translatedParent && translatedParent[targetField];
+
+                    // Fallback al sorgente: targetField è blacklistato o non presente nel testo tradotto
+                    if (!slugSource) {
+                        const sourceParent = getParentObject(sourceDoc, path.raw);
+                        slugSource = sourceParent && sourceParent[targetField];
+                    }
+
+                    if (typeof slugSource === 'string' && slugSource.trim()) {
+                        const slug = slugify(slugSource);
                         if (slug) set(key, slug);
                         else return; // slugify vuoto: mantieni valore sorgente
                     }

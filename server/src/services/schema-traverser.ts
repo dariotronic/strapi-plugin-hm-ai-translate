@@ -64,6 +64,9 @@ export class SchemaTraverser {
 
             if (!attribute || value == null) continue;
 
+            // Campi non localizzati: condivisi tra tutte le locale, non devono essere tradotti
+            if (attribute.pluginOptions?.i18n?.localized === false) continue;
+
             const newPath = [...currentPath, key];
 
             // Base cases for translatable types
