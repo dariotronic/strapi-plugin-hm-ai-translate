@@ -345,6 +345,14 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         const config = strapi.plugin('hm-ai-strapi-translate').config;
 
         const model = (strapi as any).getModel(uid);
+
+        // Verifica che il content type abbia la localizzazione i18n abilitata.
+        // Senza questo check, la traduzione sovrascrive il documento originale
+        // perché non esiste una locale separata su cui scrivere.
+        if (!model?.pluginOptions?.i18n?.localized) {
+            throw new Error(`Content type "${uid}" does not have i18n localization enabled. Enable it in the Content Type Builder before translating.`);
+        }
+
         const isSingleType = model?.kind === 'singleType';
 
         // 1. Fetch Source Document con deep populate

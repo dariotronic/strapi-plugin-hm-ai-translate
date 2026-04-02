@@ -125,6 +125,13 @@ export function TranslatePanel(props: TranslatePanelProps) {
         return null;
     }
 
+    // Don't show panel if content type doesn't have i18n enabled.
+    // Non-i18n documents don't have a locale property: translating them would
+    // overwrite the original document instead of creating a new localization.
+    if (document && !('locale' in document)) {
+        return null;
+    }
+
     // Don't show panel if: no locales loaded, not on default locale, or no targets
     if (!locales.length || !defaultLocale || currentDocLocale !== defaultLocale || !targetLocales.length) {
         return null;
