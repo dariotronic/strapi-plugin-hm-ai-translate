@@ -126,9 +126,9 @@ export function TranslatePanel(props: TranslatePanelProps) {
     }
 
     // Don't show panel if content type doesn't have i18n enabled.
-    // Non-i18n documents don't have a locale property: translating them would
-    // overwrite the original document instead of creating a new localization.
-    if (document && !('locale' in document)) {
+    // Strapi includes locale: null for non-i18n content types, so we check
+    // for a truthy locale string rather than key presence.
+    if (document && !document.locale) {
         return null;
     }
 
